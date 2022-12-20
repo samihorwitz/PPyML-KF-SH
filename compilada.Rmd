@@ -1,0 +1,100 @@
+---
+title: "compilada"
+author: "KS"
+date: "2022-12-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(readxl)
+```
+
+#Importamos la base consolidada y filtramos los casos a analizar para el TP
+```{r}
+basecompilada <- read_excel("Reprogramación al 2022-09-22.xlsx", 
+    sheet = "Compilación y cálculos", skip = 6)
+```
+
+```{r}
+basecompiladadepu1 <- basecompilada %>% 
+  mutate("Caso Final" = as.factor(`Caso Final`)) %>% 
+  filter(`Hay PPGI?` == 1, `Hay artículo 15?` == 0) %>% 
+  select(c("BAPIN", "Proy de ley", "Cubo - Contribución", "Cubo - Inversión principal", "Cubo - Tipo de registro", "Otras - admite pluri", "Otras - control costo", "PPGI - adelantamiento de curva de inversiones es posible", "PPGI - Base", "PPGI - Base -1", "PPGI - Base -2", "PPGI - Base +1", "PPGI - Base +2", "PPGI - Monto 2022 y futuros", "PPGI - Monto 2023 y futuros", "PPGI - Monto 2024 y futuros", "PPGI - Períodos con monto", "PPGI - Períodos con monto - sólo 2023 y posteriores", "PPGI - Resto", "PPGI - Tiene impacto sobre ejercicios posteriores a 2023?", "PPGI - último período con monto", "PPGI - último período que debe compensarse", "Caso Final", "Caso 1", "Caso 2", "Caso 3", "Caso 4", "Caso 5", "Caso 14", "Caso 17", "Proy de Ley vs PPGI"))
+```
+
+```{r}
+basecompiladadepu2 <- basecompiladadepu1 %>% 
+  select(c("BAPIN", "Cubo - Contribución", "Cubo - Inversión principal", "Cubo - Tipo de registro", "Otras - admite pluri", "Otras - control costo", "PPGI - adelantamiento de curva de inversiones es posible",  "PPGI - Tiene impacto sobre ejercicios posteriores a 2023?", "Caso Final", "Proy de Ley vs PPGI")) %>% 
+  mutate(aux1 = c(1:1), aux2 = c(1:1), aux3 = c(1:1), aux4 = c(1:1)) %>% 
+  pivot_wider(names_from = `Cubo - Contribución`, values_from = "aux1", values_fill = 0) %>% 
+  pivot_wider(names_from = `Cubo - Inversión principal`, values_from = "aux2", values_fill = 0) %>% 
+  pivot_wider(names_from = `Cubo - Tipo de registro`, values_from = "aux3", values_fill = 0) %>% 
+  pivot_wider(names_from = `Proy de Ley vs PPGI`, values_from = "aux4", values_fill = 0)
+
+basecompiladadepu2 <- basecompiladadepu2 %>% 
+  replace_na(list(`PPGI - adelantamiento de curva de inversiones es posible` = 0))
+```
+
+```{r}
+basecompiladadepu3 <- basecompiladadepu2 %>% 
+  select(-c("Caso Final"))
+```
+
+```{r}
+basecompiladadepu4 <- basecompiladadepu3 %>% 
+  select(-c("BAPIN"))
+```
+
+# Los chunks siguientes se aproximan a un algoritmo de clusterización (falta revisar el bajo porcentaje de ajuste)
+
+```{r}
+casos2 <- kmeans(basecompiladadepu4, centers = 2)
+casos2
+```
+
+```{r}
+casos3 <- kmeans(basecompiladadepu4, centers = 3)
+casos3
+```
+
+```{r}
+casos4 <- kmeans(basecompiladadepu4, centers = 4)
+casos4
+```
+
+```{r}
+casos5 <- kmeans(basecompiladadepu4, centers = 5)
+casos5
+```
+
+```{r}
+casos6 <- kmeans(basecompiladadepu4, centers = 6)
+casos6
+```
+
+```{r}
+casos7 <- kmeans(basecompiladadepu4, centers = 7)
+casos7
+```
+
+```{r}
+casos8 <- kmeans(basecompiladadepu4, centers = 8)
+casos8
+```
+
+```{r}
+casos15 <- kmeans(basecompiladadepu4, centers = 15)
+casos15
+```
+
+# Intento de modelo de regresión logística.
+
+```{r}
+train <- basecompiladadepu2[1:1500,]
+test <- basecompiladadepu2[1501:2171,]
+
+model1 <- glm(formula= `Caso Final` ~.,family=binomial(link='logit'),data=train)
+```
